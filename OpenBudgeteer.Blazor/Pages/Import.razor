@@ -49,7 +49,7 @@
         <div class="row div-margin-top">
             <div class="col form-group">
 				<label>Import Profile:</label>
-                <select class="form-control form-control-sm" @onchange=@ImportProfile_SelectionChanged>
+                <select class="form-select form-select-sm" @onchange=@ImportProfile_SelectionChanged>
                     <option value="@_placeholderItemId">---Select Import Profile---</option>
                     @foreach (var importProfile in _dataContext.AvailableImportProfiles)
                     {
@@ -70,7 +70,7 @@
             </div>
             <div class="col form-group">
                 <label>Target Account:</label>
-                <select class="form-control form-control-sm" @onchange=@TargetAccount_SelectionChanged>
+                <select class="form-select form-select-sm" @onchange=@TargetAccount_SelectionChanged>
                     <option value="@_placeholderItemId">---Select Target Account---</option>
                     @foreach (var account in _dataContext.AvailableAccounts)
                     {
@@ -127,7 +127,7 @@
         <div class="row">
             <div class="col">
                 <label>Transaction Date:</label>
-                <select class="form-control form-control-sm" @onchange=@TransactionDateColumn_SelectionChanged>
+                <select class="form-select form-select-sm" @onchange=@TransactionDateColumn_SelectionChanged>
                     <option value="@_placeholderItemValue">---Select Column---</option>
                     @foreach (var column in _dataContext.IdentifiedColumns)
                     {
@@ -144,7 +144,7 @@
             </div>
             <div class="col">
                 <label>Payee (optional):</label>
-                <select class="form-control form-control-sm" @onchange=@PayeeColumn_SelectionChanged>
+                <select class="form-select form-select-sm" @onchange=@PayeeColumn_SelectionChanged>
                     <option value="@_placeholderItemValue">---Select Column---</option>
                     @foreach (var column in _dataContext.IdentifiedColumns)
                     {
@@ -161,7 +161,7 @@
             </div>
             <div class="col">
                 <label>Memo:</label>
-                <select class="form-control form-control-sm" @onchange=@MemoColumn_SelectionChanged>
+                <select class="form-select form-select-sm" @onchange=@MemoColumn_SelectionChanged>
                     <option value="@_placeholderItemValue">---Select Column---</option>
                     @foreach (var column in _dataContext.IdentifiedColumns)
                     {
@@ -178,7 +178,7 @@
             </div>
             <div class="col">
                 <label>Amount:</label>
-                <select class="form-control form-control-sm" @onchange=@AmountColumn_SelectionChanged>
+                <select class="form-select form-select-sm" @onchange=@AmountColumn_SelectionChanged>
                     <option value="@_placeholderItemValue">---Select Column---</option>
                     @foreach (var column in _dataContext.IdentifiedColumns)
                     {

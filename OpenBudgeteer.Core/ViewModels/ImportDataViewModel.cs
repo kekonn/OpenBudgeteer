@@ -15,6 +15,7 @@ using TinyCsvParser.Mapping;
 using TinyCsvParser.Tokenizer.RFC4180;
 using TinyCsvParser.TypeConverter;
 using System.Linq.Expressions;
+using System.Threading;
 
 namespace OpenBudgeteer.Core.ViewModels;
 
@@ -514,35 +515,31 @@ public class ImportDataViewModel : ViewModelBase
     /// Uses data from <see cref="ParsedRecords"/> to store it in the database
     /// </summary>
     /// <returns>Object which contains information and results of this method</returns>
-    public async Task<ViewModelOperationResult> ImportDataAsync()
+    public async Task<ViewModelOperationResult> ImportDataAsync(CancellationToken cancellationToken = default)
     {
         if (!_isProfileValid) return new ViewModelOperationResult(false, "Unable to Import Data as current settings are invalid.");
-        
-        using (var dbContext = new DatabaseContext(_dbOptions))
+
+        await using var dbContext = new DatabaseContext(_dbOptions);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
         {
-            using (var transaction = dbContext.Database.BeginTransaction())
+            var importedCount = 0;
+            var newRecords = new List<BankTransaction>();
+            foreach (var parsedRecord in ParsedRecords.Where(i => i.IsValid))
             {
-                try
-                {
-                    var importedCount = 0;
-                    var newRecords = new List<BankTransaction>();
-                    foreach (var parsedRecord in ParsedRecords.Where(i => i.IsValid))
-                    {
-                        var newRecord = parsedRecord.Result;
-                        newRecord.AccountId = SelectedAccount.AccountId;
-                        newRecords.Add(newRecord);
-                    }
-                    importedCount = dbContext.CreateBankTransactions(newRecords);
-                    
-                    transaction.Commit();
-                    return new ViewModelOperationResult(true, $"Successfully imported {importedCount} records.");
-                }
-                catch (Exception e)
-                {
-                    transaction.Rollback();
-                    return new ViewModelOperationResult(false, $"Unable to Import Data. Error message: {e.Message}");
-                }
+                var newRecord = parsedRecord.Result;
+                newRecord.AccountId = SelectedAccount.AccountId;
+                newRecords.Add(newRecord);
             }
+            importedCount = dbContext.CreateBankTransactions(newRecords);
+                    
+            await transaction.CommitAsync(cancellationToken);
+            return new ViewModelOperationResult(true, $"Successfully imported {importedCount} records.");
+        }
+        catch (Exception e)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new ViewModelOperationResult(false, $"Unable to Import Data. Error message: {e.Message}");
         }
     }
 

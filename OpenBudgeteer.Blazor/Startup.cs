@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -10,9 +9,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NodaTime;
+using OpenBudgeteer.Blazor.Services;
 using OpenBudgeteer.Core.Common.Database;
 using OpenBudgeteer.Core.ViewModels;
 using Tewr.Blazor.FileReader;
+using VMelnalksnis.NordigenDotNet.DependencyInjection;
 
 namespace OpenBudgeteer.Blazor;
 
@@ -34,6 +36,13 @@ public class Startup
         services.AddServerSideBlazor();
         services.AddFileReaderService();
         services.AddScoped<YearMonthSelectorViewModel>();
+        
+        // Add Nordigen serivces
+        services.AddSingleton<IClock>(SystemClock.Instance)
+            .AddSingleton(DateTimeZoneProviders.Tzdb)
+            .AddNordigenDotNet(Configuration);
+
+        services.AddScoped<IBankConnectionService, NordigenService>();
 
         var provider = Configuration.GetValue<string>("CONNECTION_PROVIDER");
         string connectionString;

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using NodaTime;
 using OpenBudgeteer.Blazor.Services;
@@ -37,12 +38,17 @@ public class Startup
         services.AddFileReaderService();
         services.AddScoped<YearMonthSelectorViewModel>();
         
-        // Add Nordigen serivces
-        services.AddSingleton<IClock>(SystemClock.Instance)
-            .AddSingleton(DateTimeZoneProviders.Tzdb)
-            .AddNordigenDotNet(Configuration);
-
-        services.AddScoped<IBankConnectionService, NordigenService>();
+        // Add Nordigen services, if configured
+        if (Configuration.GetSection("Nordigen").Exists())
+        {
+            services.AddSingleton<IClock>(SystemClock.Instance)
+                .AddSingleton(DateTimeZoneProviders.Tzdb)
+                .AddNordigenDotNet(Configuration);
+            services.AddMemoryCache(); // for some of the lists that don't change often
+            services.TryAddEnumerable(new ServiceDescriptor(typeof(IBankConnectionService),
+                typeof(NordigenService),
+                ServiceLifetime.Scoped));
+        }
 
         var provider = Configuration.GetValue<string>("CONNECTION_PROVIDER");
         string connectionString;

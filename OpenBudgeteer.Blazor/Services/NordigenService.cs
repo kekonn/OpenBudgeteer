@@ -5,22 +5,30 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.Caching.Memory;
 using OpenBudgeteer.Core.Common;
 using OpenBudgeteer.Core.Enums;
 using OpenBudgeteer.Core.Models;
 using VMelnalksnis.NordigenDotNet;
 using VMelnalksnis.NordigenDotNet.Agreements;
 using VMelnalksnis.NordigenDotNet.Institutions;
+using VMelnalksnis.NordigenDotNet.Requisitions;
 
 namespace OpenBudgeteer.Blazor.Services;
 
 public class NordigenService : IBankConnectionService
 {
+    private const string BankListCacheKey = "Nordigen_BankList";
+    private const string AccountListCacheKeyPrefix = "Nordigen_AccountList";
+    private static string AccountListCacheKey(Guid connectionId) => $"{AccountListCacheKeyPrefix}_{connectionId:N}";
+    
     private readonly INordigenClient _nordigenClient;
+    private readonly IMemoryCache _cache;
 
-    public NordigenService(INordigenClient nordigenClient)
+    public NordigenService(INordigenClient nordigenClient, IMemoryCache cache)
     {
         _nordigenClient = nordigenClient ?? throw new ArgumentNullException(nameof(nordigenClient));
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     }
 
     /// <summary>
@@ -39,9 +47,15 @@ public class NordigenService : IBankConnectionService
 
     private async Task<ICollection<Bank>> GetBanksAsyncImpl(string country, CancellationToken cancellationToken = default)
     {
-        var institutions = await _nordigenClient.Institutions.GetByCountry(country, cancellationToken);
+        return await _cache.GetOrCreateAsync(BankListCacheKey, async entry =>
+        {
+            entry.SetSlidingExpiration(TimeSpan.FromDays(1))
+                .SetAbsoluteExpiration(TimeSpan.FromDays(21));
+            
+            var institutions = await _nordigenClient.Institutions.GetByCountry(country, cancellationToken);
 
-        return institutions.Select(ToBank).ToArray();
+            return institutions.Select(ToBank).ToArray();
+        });
     }
 
     /// <summary>
@@ -93,6 +107,49 @@ public class NordigenService : IBankConnectionService
 
         return ToBankConnection(createdAgreement);
     }
+    
+    /// <summary>
+    /// Request a link from the bank service we can redirect the user to, so they can authorize the connection.
+    /// </summary>
+    /// <param name="connection">The previously created bank connection</param>
+    /// <param name="redirectUri">The uri that the service should redirect to after the authorization</param>
+    /// <param name="reference">An optional reference we can pass in</param>
+    /// <returns>A link the user should visit in their browser, to authorize the connection to their bank and a unique id that references this requisition.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if any of the required arguments are null</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="connection"/>.BankId is null, empty or whitespace.</exception>
+    public Task<(Uri, Guid)> CreateConnectionAcceptanceUrlAsync(BankConnection connection, Uri redirectUri, string reference = null)
+    {
+        if (connection == null) throw new ArgumentNullException(nameof(connection));
+        if (redirectUri == null) throw new ArgumentNullException(nameof(redirectUri));
+
+        if (string.IsNullOrWhiteSpace(connection.BankId))
+            throw new ArgumentException("The connection should be linked to a bank.", nameof(connection));
+
+        return CreateConnectionAcceptUriImpl(connection, redirectUri, reference);
+    }
+
+    /// <summary>
+    /// Gets a list of all accounts available under the given connection.
+    /// </summary>
+    /// <param name="bankConnectionId">The id of the bank connection</param>
+    /// <returns>A object containing a list of accounts in the given connection, as wel as it's status.</returns>
+    public async Task<BankAccountsInBankConnection> GetBankAccountsAsync(Guid bankConnectionId)
+    {
+        return ToAccountsList(await _cache.GetOrCreateAsync(AccountListCacheKey(bankConnectionId), 
+            async entry => await _nordigenClient.Requisitions.Get(bankConnectionId)));
+    }
+
+    private async Task<(Uri, Guid)> CreateConnectionAcceptUriImpl(BankConnection connection, Uri redirectUri, string reference = null)
+    {
+        var requisition = new RequisitionCreation(redirectUri, connection.BankId)
+        {
+            Reference = reference
+        };
+
+        var uriResponse = await _nordigenClient.Requisitions.Post(requisition);
+
+        return (uriResponse.Link, uriResponse.Id);
+    }
 
     #region Convertors
 
@@ -120,6 +177,17 @@ public class NordigenService : IBankConnectionService
             MaxHistoricalDays = agreement.MaxHistoricalDays,
             AccessValidForDays = agreement.AccessValidForDays,
             Scopes = agreement.AccessScope.ToAccessScope()
+        };
+    }
+
+    private static BankAccountsInBankConnection ToAccountsList(Requisition requisition)
+    {
+        return new BankAccountsInBankConnection
+        {
+            Id = requisition.Id,
+            Accounts = requisition.Accounts,
+            Reference = requisition.Reference,
+            Status = Enum.GetName(requisition.Status)
         };
     }
     #endregion

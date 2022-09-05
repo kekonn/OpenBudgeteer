@@ -35,21 +35,17 @@
                 @if (BankConnectionsActive)
                 {
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" id="importNavDropDown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <span class="oi oi-data-transfer-upload" aria-hidden="true"></span> Import
                         </a>
-                        <ul class="dropdown-menu">
-                            <li>
-                                <NavLink class="dropdown-item" href="import">
-                                    <span class="oi oi-data-transfer-upload" aria-hidden="true"></span> File Import
-                                </NavLink>
-                            </li>
-                            <li>
-                                <NavLink class="dropdown-item" href="import-cloud">
-                                    <span class="oi oi-cloud-download" aria-hidden="true"></span> PSD2 Import
-                                </NavLink>
-                            </li>
-                        </ul>
+                        <div class="dropdown-menu" aria-labelledby="importNavDropDown">
+                            <NavLink class="dropdown-item" href="import">
+                                <span class="oi oi-data-transfer-upload" aria-hidden="true"></span> File Import
+                            </NavLink>
+                            <NavLink class="dropdown-item" href="import-cloud">
+                                <span class="oi oi-cloud-download" aria-hidden="true"></span> PSD2 Import
+                            </NavLink>
+                        </div>
                     </li>
                 }
                 else

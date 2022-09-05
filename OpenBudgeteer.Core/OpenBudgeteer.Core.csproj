@@ -12,6 +12,7 @@
     </PackageReference>
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2" />
     <PackageReference Include="TinyCsvParser" Version="2.7.0" />
+    <PackageReference Include="VMelnalksnis.NordigenDotNet.DependencyInjection" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using OpenBudgeteer.Core.Models;
 
-namespace OpenBudgeteer.Blazor.Services;
+namespace OpenBudgeteer.Core.Services;
 
 public interface IBankConnectionService
 {
@@ -46,4 +46,9 @@ public interface IBankConnectionService
     /// <param name="bankConnectionId">The id of the bank connection</param>
     /// <returns>A object containing a list of accounts in the given connection, as wel as it's status.</returns>
     Task<BankAccountsInBankConnection> GetBankAccountsAsync(Guid bankConnectionId);
+
+    /// <summary>
+    /// The services' display name, for use in the import window
+    /// </summary>
+    string DisplayName { get; }
 }

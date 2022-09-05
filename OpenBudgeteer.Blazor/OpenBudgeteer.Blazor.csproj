@@ -12,7 +12,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.8" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
     <PackageReference Include="Tewr.Blazor.FileReader" Version="3.3.1.21360" />
-    <PackageReference Include="VMelnalksnis.NordigenDotNet.DependencyInjection" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

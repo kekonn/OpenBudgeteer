@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Caching.Memory;
 using OpenBudgeteer.Core.Common;
 using OpenBudgeteer.Core.Enums;
@@ -14,7 +12,7 @@ using VMelnalksnis.NordigenDotNet.Agreements;
 using VMelnalksnis.NordigenDotNet.Institutions;
 using VMelnalksnis.NordigenDotNet.Requisitions;
 
-namespace OpenBudgeteer.Blazor.Services;
+namespace OpenBudgeteer.Core.Services;
 
 public class NordigenService : IBankConnectionService
 {
@@ -25,6 +23,11 @@ public class NordigenService : IBankConnectionService
     private readonly INordigenClient _nordigenClient;
     private readonly IMemoryCache _cache;
 
+    /// <summary>
+    /// The services' display name, for use in the import window
+    /// </summary>
+    public string DisplayName => "Nordigen PSD2 Gateway";
+    
     public NordigenService(INordigenClient nordigenClient, IMemoryCache cache)
     {
         _nordigenClient = nordigenClient ?? throw new ArgumentNullException(nameof(nordigenClient));

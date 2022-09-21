@@ -12,7 +12,7 @@ public interface IBankConnectionService
     /// Gets a list of banks supported by this client.
     /// </summary>
     /// <param name="country">A two letter country code (ISO 3166)</param>
-    Task<ICollection<Bank>> GetSupportedBanksAsync(string country, CancellationToken cancellationToken = default);
+    Task<ICollection<Bank>> GetSupportedBanksAsync(string country = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get a list of existing banking connections.

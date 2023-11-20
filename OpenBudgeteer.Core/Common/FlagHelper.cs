@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using OpenBudgeteer.Core.Enums;
+using OpenBudgeteer.Contracts.Enums;
 
 namespace OpenBudgeteer.Core.Common;
 

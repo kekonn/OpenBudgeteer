@@ -1,6 +1,6 @@
 using System;
 
-namespace OpenBudgeteer.Core.Enums;
+namespace OpenBudgeteer.Contracts.Enums;
 
 [Flags]
 public enum BankConnectionAccessScope : short

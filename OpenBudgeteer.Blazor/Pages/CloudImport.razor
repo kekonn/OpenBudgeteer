@@ -1,12 +1,13 @@
 ﻿@page "/import-cloud"
 
 @using OpenBudgeteer.Core.ViewModels
-@using OpenBudgeteer.Core.Common.Database
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.Extensions.DependencyInjection
+@using OpenBudgeteer.Contracts.Models
 @using OpenBudgeteer.Core.Common
-@using OpenBudgeteer.Core.Models
 @using OpenBudgeteer.Core.Services
+@using OpenBudgeteer.Core.ViewModels.ItemViewModels
+@using OpenBudgeteer.Data
 
 @inject DbContextOptions<DatabaseContext> DbContextOptions
 @inject IServiceProvider Services
@@ -221,7 +222,7 @@
         _step3Enabled = false;
         _step4Enabled = false;
         _dataContext = new CloudImportDataViewModel(DbContextOptions, Services.GetServices<IBankConnectionService>());
-        HandleResult((await _dataContext.LoadDataAsync()));
+        HandleResult(await _dataContext.LoadDataAsync());
     }
 
     void HandleResult(ViewModelOperationResult result)
@@ -249,19 +250,20 @@
         }
         
         // Check for existing connections
-        var bankService = _dataContext.BankServices.FirstOrDefault(b => b.Id == _selectedBankService);
-        if (bankService is null)
+        var selectedBankService = _dataContext.BankServices.FirstOrDefault(b => b.Id == _selectedBankService);
+        if (selectedBankService is null)
         {
             return new ViewModelOperationResult(false, "Error finding selected bank service.");
         }
 
-        await UpdateBankConnections(bankService);
+        var knownBankService = _dataContext.GetSelectedBankConnection(selectedBankService);
+        await UpdateBankConnections(knownBankService);
         _step2Enabled = true;
-
-
+        
         return new ViewModelOperationResult(true, true);
     }
-
+    
+    /// Update the shown list of bank connections based on the selected banking service.
     private async Task UpdateBankConnections(IBankConnectionService bankService)
     {
         var connections = await bankService.GetExistingBankConnectionsAsync();

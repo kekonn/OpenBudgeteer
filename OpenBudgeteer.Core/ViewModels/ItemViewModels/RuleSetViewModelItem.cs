@@ -2,9 +2,9 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using OpenBudgeteer.Contracts.Models;
 using OpenBudgeteer.Core.Common;
-using OpenBudgeteer.Core.Common.Database;
-using OpenBudgeteer.Core.Models;
+using OpenBudgeteer.Data;
 
 namespace OpenBudgeteer.Core.ViewModels.ItemViewModels;
 
@@ -86,25 +86,14 @@ public class RuleSetViewModelItem : ViewModelBase
         _dbOptions = dbOptions;
         AvailableBuckets.Add(new Bucket
         {
-            BucketId = 0,
-            BucketGroupId = 0,
+            BucketId = Guid.Empty,
+            BucketGroupId = Guid.Empty,
             Name = "No Selection"
         });
-        using (var dbContext = new DatabaseContext(_dbOptions))
+        using var dbContext = new DatabaseContext(_dbOptions);
+        foreach (var availableBucket in dbContext.Bucket.Where(i => !i.IsInactive).ToList())
         {
-            foreach (var availableBucket in dbContext.Bucket.Where(i => i.BucketId <= 2))
-            {
-                AvailableBuckets.Add(availableBucket);
-            }
-
-            var query = dbContext.Bucket
-                .Where(i => i.BucketId > 2 && !i.IsInactive)
-                .OrderBy(i => i.Name);
-
-            foreach (var availableBucket in query.ToList())
-            {
-                AvailableBuckets.Add(availableBucket);
-            }
+            AvailableBuckets.Add(availableBucket);
         }
     }
 
@@ -124,13 +113,11 @@ public class RuleSetViewModelItem : ViewModelBase
             Priority = bucketRuleSet.Priority,
             TargetBucketId = bucketRuleSet.TargetBucketId
         };
-        using (var dbContext = new DatabaseContext(_dbOptions))
+        using var dbContext = new DatabaseContext(_dbOptions);
+        TargetBucket = dbContext.Bucket.FirstOrDefault(i => i.BucketId == bucketRuleSet.TargetBucketId);
+        foreach (var mappingRule in dbContext.MappingRule.Where(i => i.BucketRuleSetId == bucketRuleSet.BucketRuleSetId))
         {
-            TargetBucket = dbContext.Bucket.FirstOrDefault(i => i.BucketId == bucketRuleSet.TargetBucketId);
-            foreach (var mappingRule in dbContext.MappingRule.Where(i => i.BucketRuleSetId == bucketRuleSet.BucketRuleSetId))
-            {
-                MappingRules.Add(new MappingRuleViewModelItem(_dbOptions, mappingRule));
-            }
+            MappingRules.Add(new MappingRuleViewModelItem(_dbOptions, mappingRule));
         }
     }
 
@@ -159,7 +146,11 @@ public class RuleSetViewModelItem : ViewModelBase
     /// </summary>
     public void AddEmptyMappingRule()
     {
-        MappingRules.Add(new MappingRuleViewModelItem(_dbOptions, new MappingRule()));
+        MappingRules.Add(new MappingRuleViewModelItem(_dbOptions, new MappingRule()
+        {
+            ComparisionField = 1,
+            ComparisionType = 1
+        }));
     }
 
     /// <summary>
@@ -168,54 +159,51 @@ public class RuleSetViewModelItem : ViewModelBase
     /// <returns>Object which contains information and results of this method</returns>
     public ViewModelOperationResult CreateUpdateRuleSetItem()
     {
-        using (var dbContext = new DatabaseContext(_dbOptions))
+        using var dbContext = new DatabaseContext(_dbOptions);
+        using var dbTransaction = dbContext.Database.BeginTransaction();
+        try
         {
-            using (var dbTransaction = dbContext.Database.BeginTransaction())
+            if (RuleSet.BucketRuleSetId == Guid.Empty)
             {
-                try
+                // CREATE
+                if (dbContext.CreateBucketRuleSet(RuleSet) == 0)
+                    throw new Exception("Rule could not be created in database.");
+                foreach (var mappingRule in MappingRules)
                 {
-                    if (RuleSet.BucketRuleSetId == 0)
-                    {
-                        // CREATE
-                        if (dbContext.CreateBucketRuleSet(RuleSet) == 0)
-                            throw new Exception("Rule could not be created in database.");
-                        foreach (var mappingRule in MappingRules)
-                        {
-                            mappingRule.MappingRule.BucketRuleSetId = RuleSet.BucketRuleSetId;
-                        }
-                    }
-                    else
-                    {
-                        // UPDATE
-                        dbContext.DeleteMappingRules(dbContext.MappingRule.Where(i =>
-                            i.BucketRuleSetId == RuleSet.BucketRuleSetId));
-
-                        dbContext.UpdateBucketRuleSet(RuleSet);
-                        foreach (var mappingRule in MappingRules)
-                        {
-                            mappingRule.GenerateRuleOutput();
-                        }
-                    }
-
-                    foreach (var mappingRuleViewModelItem in MappingRules)
-                    {
-                        mappingRuleViewModelItem.MappingRule.MappingRuleId = 0;
-                    }
-                    dbContext.CreateMappingRules(MappingRules.Select(i => i.MappingRule).ToList());
-                    
-                    dbTransaction.Commit();
-                    _oldRuleSetViewModelItem = null;
-                    InModification = false;
-
-                    return new ViewModelOperationResult(true);
-                }
-                catch (Exception e)
-                {
-                    dbTransaction.Rollback();
-                    return new ViewModelOperationResult(false, $"Errors during database update: {e.Message}");
+                    mappingRule.MappingRule.BucketRuleSetId = RuleSet.BucketRuleSetId;
                 }
             }
-            
+            else
+            {
+                // UPDATE
+                dbContext.DeleteMappingRules(dbContext.MappingRule.Where(i =>
+                    i.BucketRuleSetId == RuleSet.BucketRuleSetId));
+
+                dbContext.UpdateBucketRuleSet(RuleSet);
+                foreach (var mappingRule in MappingRules)
+                {
+                    mappingRule.GenerateRuleOutput();
+                }
+            }
+
+            foreach (var mappingRuleViewModelItem in MappingRules)
+            {
+                mappingRuleViewModelItem.MappingRule.MappingRuleId = Guid.Empty;
+            }
+            dbContext.CreateMappingRules(MappingRules
+                .Select(i => i.MappingRule)
+                .ToList());
+                    
+            dbTransaction.Commit();
+            _oldRuleSetViewModelItem = null;
+            InModification = false;
+
+            return new ViewModelOperationResult(true);
+        }
+        catch (Exception e)
+        {
+            dbTransaction.Rollback();
+            return new ViewModelOperationResult(false, $"Errors during database update: {e.Message}");
         }
     }
 

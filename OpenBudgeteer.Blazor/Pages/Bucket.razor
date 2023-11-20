@@ -1,28 +1,17 @@
 ﻿@page "/bucket"
-@using OpenBudgeteer.Core.Common.Database
+@using OpenBudgeteer.Blazor.ViewModels
 @using OpenBudgeteer.Core.ViewModels
 @using OpenBudgeteer.Core.ViewModels.ItemViewModels
 @using Microsoft.EntityFrameworkCore
 @using System.Drawing
 @using System.Globalization
+@using OpenBudgeteer.Contracts.Models
 @using OpenBudgeteer.Core.Common
-@using OpenBudgeteer.Core.Models
+@using OpenBudgeteer.Data
 @inject DbContextOptions<DatabaseContext> DbContextOptions
 @inject YearMonthSelectorViewModel YearMonthDataContext
 
 <style>
-	/* Overwrite custom styles */
-	.col-numbers {
-        width: 90px;
-    }
-	.col-buttons {
-        width: 120px;
-    }  
-	.table td {
-        border-top: none;
-		border-bottom: 1px solid #dee2e6;
-    }
-
     /* Page specific styles */
     hr.tile-divider {
         margin-top: 0.3rem;
@@ -33,35 +22,14 @@
     }
     div.header-stats-tile {
         margin-bottom: 0.4rem;
-    }
-    .bucketgroup-header-text {
-        font-size: 1rem;
-        font-weight: bold;
-        vertical-align: middle;
-    }
-	button.collapse-button {
-        font-family: "Segoe UI Symbol";
-        padding: 0;
-        height: 25px;
-        width: 25px;
-    }
-	button.collapse-button:focus, button.collapse-button:active {
-        outline: none;
-		box-shadow: none;
-    }
-    .col-details {
-        width: 250px;
-    }
-    .borderless td, .borderless th {
-        border-bottom: none;
-    }
+    }   
 </style>
 
 <div class="row" style="margin:0 0 1rem 0">
     <div class="col header-stats-tile">
         <div class="row">
             <div class="col-md-auto no-gutters">
-                <img src="https://img.icons8.com/officel/60/000000/refund.png"/>
+                <img src="css/icons8/refund.png"/>
             </div>
             <div class="col" style="text-align: center">
                 <span class="tile-header">Income</span>
@@ -73,7 +41,7 @@
     <div class="col header-stats-tile">
         <div class="row">
             <div class="col-md-auto no-gutters">
-                <img src="https://img.icons8.com/officel/60/000000/cash-in-hand.png"/>
+                <img src="css/icons8/cash-in-hand.png"/>
             </div>
             <div class="col" style="text-align: center">
                 <span class="tile-header">Expenses</span>
@@ -85,7 +53,7 @@
     <div class="col header-stats-tile">
         <div class="row">
             <div class="col-md-auto no-gutters">
-                <img src="https://img.icons8.com/officel/60/000000/exchange.png"/>
+                <img src="css/icons8/exchange.png"/>
             </div>
             <div class="col" style="text-align: center">
                 <span class="tile-header">Month Balance</span>
@@ -97,7 +65,7 @@
     <div class="col header-stats-tile">
         <div class="row">
             <div class="col-md-auto no-gutters">
-                <img src="https://img.icons8.com/officel/60/000000/merchant-account.png"/>
+                <img src="css/icons8/merchant-account.png"/>
             </div>
             <div class="col" style="text-align: center">
                 <span class="tile-header">Bank Balance</span>
@@ -112,7 +80,7 @@
     <div class="col header-stats-tile">
         <div class="row">
             <div class="col-md-auto no-gutters">
-                <img src="https://img.icons8.com/officel/60/000000/banknotes.png"/>
+                <img src="css/icons8/banknotes.png"/>
             </div>
             <div class="col" style="text-align: center">
                 <span class="tile-header">Budget</span>
@@ -124,7 +92,7 @@
     <div class="col header-stats-tile">
         <div class="row">
             <div class="col-md-auto no-gutters">
-                <img src="https://img.icons8.com/officel/60/000000/receive-cash.png"/>
+                <img src="css/icons8/receive-cash.png"/>
             </div>
             <div class="col" style="text-align: center">
                 <span class="tile-header">Pending Want</span>
@@ -136,7 +104,7 @@
     <div class="col header-stats-tile">
         <div class="row">
             <div class="col-md-auto no-gutters">
-                <img src="https://img.icons8.com/officel/60/000000/money-bag-euro.png"/>
+                <img src="css/icons8/money-bag-euro.png"/>
             </div>
             <div class="col" style="text-align: center">
                 <span class="tile-header">Remaining Budget</span>
@@ -148,7 +116,7 @@
     <div class="col header-stats-tile">
         <div class="row">
             <div class="col-md-auto no-gutters">
-                <img src="https://img.icons8.com/officel/60/000000/high-priority.png"/>
+                <img src="css/icons8/high-priority.png"/>
             </div>
             <div class="col" style="text-align: center">
                 <span class="tile-header">Negative Bucket Balance</span>
@@ -169,17 +137,17 @@
     <YearMonthSelector DataContext="YearMonthDataContext"/>
 </div>
 
-<table class="table table-sm">
+<table class="table table-sm bucket-table">
     <thead>
     <tr class="header-row">
         <th>Bucket</th>
-        <th class="col-numbers">Balance</th>
-        <th class="col-numbers">InOut</th>
-        <th class="col-numbers">Want</th>
-        <th class="col-numbers">In</th>
-        <th class="col-numbers">Activity</th>
-        <th class="col-details">Details</th>
-		<th class="col-buttons"></th>
+        <th class="col-numbers col-bucket-numbers">Balance</th>
+        <th class="col-numbers col-bucket-numbers">InOut</th>
+        <th class="col-numbers col-bucket-numbers">Want</th>
+        <th class="col-numbers col-bucket-numbers">In</th>
+        <th class="col-numbers col-bucket-numbers">Activity</th>
+        <th class="col-bucket-details">Details</th>
+		<th class="col-buttons col-bucket-buttons"></th>
     </tr>
     </thead>
     <tbody><tr></tr></tbody>
@@ -187,18 +155,18 @@
 
 @foreach (var bucketGroup in _dataContext.BucketGroups)
 {
-     <table class="table table-sm">
+    <table class="table table-sm bucket-table">
         <thead>
-        <tr class="header-row" @onmouseover="() => bucketGroup.IsHovered = true" @onmouseout="() => bucketGroup.IsHovered = false">
+        <tr class="header-row" @onmouseover="@(() => bucketGroup.IsHovered = true)" @onmouseout="@(() => bucketGroup.IsHovered = false)">
             @if (bucketGroup.InModification)
             {
                 <th colspan="8">
                     <div class="row" style="max-width: 500px">
                         <div class="col">
-							<input class="form-control form-control-sm" type="text" @bind="bucketGroup.BucketGroup.Name"/>
+					        <input class="form-control form-control-sm" type="text" @bind="bucketGroup.BucketGroup.Name"/>
                         </div>
-                        <div class="col-3 col-buttons">
-							<button class="btn btn-sm btn-primary" @onclick="@(() => HandleResult(bucketGroup.SaveModification()))">Ok</button>
+                        <div class="col-3 col-buttons col-bucket-buttons">
+					        <button class="btn btn-sm btn-primary" @onclick="@(() => HandleResult(bucketGroup.SaveModification()))">Ok</button>
                             <button class="btn btn-sm btn-danger" @onclick="@(() => bucketGroup.CancelModification())">Cancel</button>
                         </div>
                     </div>
@@ -208,24 +176,24 @@
             {
                 <th>
                     <div>
-						<button class="btn btn-sm header-action-button collapse-button" 
+				        <button class="btn btn-sm header-action-button collapse-button" 
                                 @onclick="@(() => bucketGroup.IsCollapsed = !bucketGroup.IsCollapsed)"><span>@(bucketGroup.IsCollapsed ? "▶" : "▼")</span></button>
                         <span class="bucketgroup-header-text">@bucketGroup.BucketGroup.Name</span>
                     </div>
                 </th>
-                <th class="col-numbers"><span class="bucketgroup-header-text">@bucketGroup.TotalBalance.ToString("N2")</span></th>
-                <th class="col-numbers"></th>                                                                                            
-                <th class="col-numbers"><span class="bucketgroup-header-text">@(bucketGroup.TotalWant == 0 ? string.Empty : bucketGroup.TotalWant.ToString("N2"))</span></th>
-                <th class="col-numbers"><span class="bucketgroup-header-text">@(bucketGroup.TotalIn == 0 ? string.Empty : bucketGroup.TotalIn.ToString("N2"))</span></th>
-                <th class="col-numbers"><span class="bucketgroup-header-text">@(bucketGroup.TotalActivity == 0 ? string.Empty : bucketGroup.TotalActivity.ToString("N2"))</span></th>
-                <th class="col-buttons" style="width: 370px">
+                <th class="col-numbers col-bucket-numbers"><span class="bucketgroup-header-text">@bucketGroup.TotalBalance.ToString("N2")</span></th>
+                <th class="col-numbers col-bucket-numbers"></th>                                                                                            
+                <th class="col-numbers col-bucket-numbers"><span class="bucketgroup-header-text">@(bucketGroup.TotalWant == 0 ? string.Empty : bucketGroup.TotalWant.ToString("N2"))</span></th>
+                <th class="col-numbers col-bucket-numbers"><span class="bucketgroup-header-text">@(bucketGroup.TotalIn == 0 ? string.Empty : bucketGroup.TotalIn.ToString("N2"))</span></th>
+                <th class="col-numbers col-bucket-numbers"><span class="bucketgroup-header-text">@(bucketGroup.TotalActivity == 0 ? string.Empty : bucketGroup.TotalActivity.ToString("N2"))</span></th>
+                <th class="col-buttons col-bucket-buttons" style="width: 370px">
                     @if (bucketGroup.IsHovered)
                     {
-                        <button class="btn btn-sm btn-primary oi oi-pencil" @onclick="@(() => bucketGroup.StartModification())"></button>
-                        <button class="btn btn-sm btn-primary oi oi-arrow-top" @onclick="@(() => HandleResult(bucketGroup.MoveGroup(-1)))"></button>
-                        <button class="btn btn-sm btn-primary oi oi-arrow-bottom" @onclick="@(() => HandleResult(bucketGroup.MoveGroup(1)))"></button>
-                        <button class="btn btn-sm btn-danger oi oi-trash" @onclick="@(() => HandleResult(_dataContext.DeleteGroup(bucketGroup)))"></button>
-                        <button class="btn btn-sm btn-primary oi oi-plus" @onclick="@(() => CreateBucket(bucketGroup))"></button>
+                        <button class="btn btn-sm btn-primary bi bi-pencil" @onclick="@(() => bucketGroup.StartModification())"></button>
+                        <button class="btn btn-sm btn-primary bi bi-arrow-up" @onclick="@(() => HandleResult(bucketGroup.MoveGroup(-1)))"></button>
+                        <button class="btn btn-sm btn-primary bi bi-arrow-down" @onclick="@(() => HandleResult(bucketGroup.MoveGroup(1)))"></button>
+                        <button class="btn btn-sm btn-danger bi bi-trash3" @onclick="@(() => HandleResult(_dataContext.DeleteGroup(bucketGroup)))"></button>
+                        <button class="btn btn-sm btn-primary bi bi-plus-lg" @onclick="@(() => CreateBucket(bucketGroup))"></button>
                     }
                 </th>
             }
@@ -234,11 +202,11 @@
         <tbody><tr></tr></tbody>
     </table>
     
-    <table class="table table-sm">
+    <table class="table table-sm bucket-table">
         <tbody class="@(bucketGroup.IsCollapsed ? "collapse" : "")">
             @foreach (var bucket in bucketGroup.Buckets)
             {
-                <tr @onmouseover="() => bucket.IsHovered = true" @onmouseout="() => bucket.IsHovered = false">
+                <tr @onmouseover="@(() => bucket.IsHovered = true)" @onmouseout="@(() => bucket.IsHovered = false)">
                     <td>
                         @if (bucket.Bucket.IsInactive)
                         {
@@ -251,16 +219,23 @@
                             <div style="background-color: @ColorTranslator.ToHtml(bucket.Bucket.Color); border-radius: 25px; padding: 5px 10px">@bucket.Bucket.Name</div>
                         }
                     </td>
-                    <td class="col-numbers">@bucket.Balance.ToString("N2")</td>
-                    <td class="col-numbers">
-                        <input class="form-control form-control-sm" style="text-align: right;" type="number"
-                               @bind="bucket.InOut"
-                               @onkeyup="@(args => InOut_Changed(bucket, args))"/>
+                    <td class="col-numbers col-bucket-numbers">@bucket.Balance.ToString("N2")</td>
+                    <td class="col-numbers col-bucket-numbers">
+                        @if (bucket.Bucket.IsInactive)
+                        {
+                            <input class="form-control form-control-sm" type="number" disabled/>
+                        }
+                        else
+                        {
+                            <input class="form-control form-control-sm" style="text-align: right;" type="number"
+                                   @bind="bucket.InOut"
+                                   @onkeyup="@(args => InOut_Changed(bucket, args))"/>    
+                        }
                     </td>
-                    <td class="col-numbers">@(bucket.Want == 0 ? string.Empty : bucket.Want.ToString("N2"))</td>
-                    <td class="col-numbers">@(bucket.In == 0 ? string.Empty : bucket.In.ToString("N2"))</td>
-                    <td class="col-numbers">@(bucket.Activity == 0 ? string.Empty : bucket.Activity.ToString("N2"))</td>
-                    <td class="col-details">
+                    <td class="col-numbers col-bucket-numbers">@(bucket.Want == 0 ? string.Empty : bucket.Want.ToString("N2"))</td>
+                    <td class="col-numbers col-bucket-numbers">@(bucket.In == 0 ? string.Empty : bucket.In.ToString("N2"))</td>
+                    <td class="col-numbers col-bucket-numbers">@(bucket.Activity == 0 ? string.Empty : bucket.Activity.ToString("N2"))</td>
+                    <td class="col-bucket-details">
                         @if (bucket.IsProgressbarVisible)
                         {
                             <div class="row">
@@ -279,12 +254,19 @@
                             </div>
                         }
                     </td>
-                    <td class="col-buttons">
+                    <td class="col-buttons col-bucket-buttons">
                         @if (bucket.IsHovered)
                         {
-                            <button class="btn btn-sm btn-primary oi oi-list" @onclick="@(() => DisplayBucketTransactions(bucket))"></button>
-                            <button class="btn btn-sm btn-primary oi oi-pencil" @onclick="@(() => ShowEditBucketDialog(bucket))"></button>
-                            <button class="btn btn-sm btn-danger oi oi-trash" @onclick="@(() => CloseBucket(bucket))"></button>
+                            if (bucket.Bucket.IsInactive)
+                            {
+                                <button class="btn btn-sm btn-primary bi bi-list-ul" @onclick="@(() => DisplayBucketDetails(bucket))"></button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-primary bi bi-list-ul" @onclick="@(() => DisplayBucketDetails(bucket))"></button>
+                                <button class="btn btn-sm btn-primary bi bi-pencil" @onclick="@(() => ShowEditBucketDialog(bucket))"></button>
+                                <button class="btn btn-sm btn-danger bi bi-trash3" @onclick="@(() => HandleBucketCloseRequest(bucket))"></button>
+                            }
                         }
                     </td>
                 </tr>
@@ -307,19 +289,25 @@
     OnCancelClickCallback="@(CancelEditBucketDialog)"
     OnSaveClickCallback="@(SaveAndCloseEditBucketDialog)"/>
 
-<TransactionDialog 
-    Title="Bucket Transactions" 
-    DataContext="@_transactionModalDialogDataContext" 
-    IsDialogVisible="@_isTransactionModalDialogVisible" 
-    IsDialogLoading="@_isTransactionModalDialogDataContextLoading"
-    CurrentBucket ="@_transactionModalDialogBucket"
-    OnClickCallback="@(() => _isTransactionModalDialogVisible = false)"/>
+<BucketDetailsDialog 
+    Title="Bucket Details" 
+    DataContext="@_bucketDetailsModalDialogDataContext" 
+    IsDialogVisible="@_isBucketDetailsModalDialogVisible" 
+    IsDialogLoading="@_isBucketDetailsModalDialogDataContextLoading"
+    OnClickCallback="@(() => _isBucketDetailsModalDialogVisible = false)"/>
+
+<DeleteConfirmationDialog 
+    Title="Close Bucket" 
+    Message="Do you really want to close this Bucket?" 
+    IsDialogVisible="@_isCloseBucketDialogVisible"
+    OnDeleteClickCallback="@CloseBucket"
+    OnCancelClickCallback="@CancelCloseBucket"/>
 
 <ErrorMessageDialog 
     Title="Bucket" 
     Message="@_errorModalDialogMessage" 
     IsDialogVisible="@_isErrorModalDialogVisible"
-    OnClickCallback="@(() => _isErrorModalDialogVisible = false)"/>
+    OnClickCallback="@CloseErrorDialog"/>
 
 @code {
     BucketViewModel _dataContext;
@@ -330,13 +318,16 @@
     BucketViewModelItem _editBucketDialogDataContext;
     bool _isEditBucketModalDialogVisible;
 
-    TransactionViewModel _transactionModalDialogDataContext;
-    OpenBudgeteer.Core.Models.Bucket _transactionModalDialogBucket;
-    bool _isTransactionModalDialogVisible;
-    bool _isTransactionModalDialogDataContextLoading;
+    BlazorBucketStatisticsViewModel _bucketDetailsModalDialogDataContext;
+    bool _isBucketDetailsModalDialogVisible;
+    bool _isBucketDetailsModalDialogDataContextLoading;
+
+    bool _isCloseBucketDialogVisible;
+    BucketViewModelItem _bucketToBeClosed;
 
     bool _isErrorModalDialogVisible;
     string _errorModalDialogMessage;
+    bool _hasErrorInBucketModalDialog;
 
     protected override async Task OnInitializedAsync()
     {
@@ -349,11 +340,6 @@
             await HandleResult(await _dataContext.LoadDataAsync());
             StateHasChanged();
         };
-    }
-
-    async void CreateGroup()
-    {
-        await HandleResult(_dataContext.CreateGroup());
     }
 
     async void DistributeBudget()
@@ -371,8 +357,9 @@
     {
         _newBucketGroupDialogDataContext = new BucketGroup
         {
-            BucketGroupId = 0,
-            Name = string.Empty
+            BucketGroupId = Guid.Empty,
+            Name = string.Empty,
+            Position = 1
         };
         _isNewBucketGroupModalDialogVisible = true;
     }
@@ -400,7 +387,14 @@
     async void SaveAndCloseEditBucketDialog()
     {
         _isEditBucketModalDialogVisible = false;
-        await SaveChanges(_editBucketDialogDataContext);
+        var result = _dataContext.SaveChanges(_editBucketDialogDataContext);
+        await HandleResult(result);
+        if (!result.IsSuccessful)
+        {
+            _hasErrorInBucketModalDialog = true; // Ensures that Dialog will be displayed again
+            return; // Error message is shown in HandleResult()
+        }
+        StateHasChanged();
     }
 
     async void CancelEditBucketDialog()
@@ -410,15 +404,22 @@
         StateHasChanged();
     }
 
-    async Task SaveChanges(BucketViewModelItem bucket)
+    void HandleBucketCloseRequest(BucketViewModelItem bucket)
     {
-        await HandleResult(_dataContext.SaveChanges(bucket));
-        StateHasChanged();
+        _bucketToBeClosed = bucket;
+        _isCloseBucketDialogVisible = true;
     }
 
-    async Task CloseBucket(BucketViewModelItem bucket)
+    void CancelCloseBucket()
     {
-        await HandleResult(_dataContext.CloseBucket(bucket));
+        _isCloseBucketDialogVisible = false;
+        _bucketToBeClosed = null;
+    }
+
+    async void CloseBucket()
+    {
+        _isCloseBucketDialogVisible = false;
+        await HandleResult(_dataContext.CloseBucket(_bucketToBeClosed));
         StateHasChanged();
     }
 
@@ -438,7 +439,8 @@
 
     async void InOut_Changed(BucketViewModelItem bucket, KeyboardEventArgs args)
     {
-        var result = bucket.HandleInOutInput(args.Key);
+        if (args.Key != "Enter") return;
+        var result = bucket.HandleInOutInput();
         if (result.IsSuccessful)
         {
             await HandleResult(_dataContext.UpdateBalanceFigures());
@@ -450,16 +452,26 @@
         }
     }
 
-    async void DisplayBucketTransactions(BucketViewModelItem bucket)
+    async void DisplayBucketDetails(BucketViewModelItem bucket)
     {
-        _isTransactionModalDialogVisible = true;
-        _isTransactionModalDialogDataContextLoading = true;
+        _isBucketDetailsModalDialogVisible = true;
+        _isBucketDetailsModalDialogDataContextLoading = true;
 
-        _transactionModalDialogDataContext = new TransactionViewModel(DbContextOptions, YearMonthDataContext);
-        _transactionModalDialogBucket = bucket.Bucket;
-        await HandleResult(await _transactionModalDialogDataContext.LoadDataAsync(bucket.Bucket, true));
+        _bucketDetailsModalDialogDataContext = new BlazorBucketStatisticsViewModel(DbContextOptions, YearMonthDataContext, bucket.Bucket);
+        await _bucketDetailsModalDialogDataContext.LoadDataAsync(true);
 
-        _isTransactionModalDialogDataContextLoading = false;
+        _isBucketDetailsModalDialogDataContextLoading = false;
         StateHasChanged();
+    }
+
+    void CloseErrorDialog()
+    {
+        _isErrorModalDialogVisible = false;
+        // In case error occuring in EditBucketDialog, display it again
+        if (_hasErrorInBucketModalDialog)
+        {
+            _isEditBucketModalDialogVisible = true;
+            _hasErrorInBucketModalDialog = false;
+        }
     }
 }

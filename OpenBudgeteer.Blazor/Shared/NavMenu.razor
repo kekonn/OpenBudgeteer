@@ -1,11 +1,11 @@
-@using OpenBudgeteer.Core.Common.Database
 @using Microsoft.EntityFrameworkCore
+@using OpenBudgeteer.Data
 @using Microsoft.Extensions.DependencyInjection
 @using OpenBudgeteer.Core.Services
 @inject DbContextOptions<DatabaseContext> DbContextOptions
 @inject IServiceProvider Services
 
-<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+<nav class="navbar navbar-expand-sm navbar-dark sticky-top bg-dark">
     <div class="row" style="width: 1500px; margin: auto">
         <div class="col-md-auto">
             <a class="navbar-brand" href="#">OpenBudgeteer</a>
@@ -14,36 +14,41 @@
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                     <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                        <span class="oi oi-home" aria-hidden="true"></span> Home
+                        <i class="bi bi-house-door"></i> Home
                     </NavLink>
                 </li>
                 <li class="nav-item">
                     <NavLink class="nav-link" href="account">
-                        <span class="oi oi-credit-card" aria-hidden="true"></span> Account
+                        <i class="bi bi-credit-card"></i> Account
                     </NavLink>
                 </li>
                 <li class="nav-item">
                     <NavLink class="nav-link" href="transaction">
-                        <span class="oi oi-transfer" aria-hidden="true"></span> Transaction
+                        <i class="bi bi-arrow-left-right"></i> Transaction
                     </NavLink>
                 </li>
                 <li class="nav-item">
                     <NavLink class="nav-link" href="bucket">
-                        <span class="oi oi-box" aria-hidden="true"></span> Bucket
+                        <i class="bi bi-bucket"></i> Bucket
+                    </NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="import">
+                        <i class="bi bi-upload"></i> Import
                     </NavLink>
                 </li>
                 @if (BankConnectionsActive)
                 {
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" id="importNavDropDown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span class="oi oi-data-transfer-upload" aria-hidden="true"></span> Import
+                            <span class="bi bi-data-transfer-upload" aria-hidden="true"></span> Import
                         </a>
                         <div class="dropdown-menu" aria-labelledby="importNavDropDown">
                             <NavLink class="dropdown-item" href="import">
-                                <span class="oi oi-data-transfer-upload" aria-hidden="true"></span> File Import
+                                <span class="bi bi-data-transfer-upload" aria-hidden="true"></span> File Import
                             </NavLink>
                             <NavLink class="dropdown-item" href="import-cloud">
-                                <span class="oi oi-cloud-download" aria-hidden="true"></span> PSD2 Import
+                                <span class="bi bi-cloud-download" aria-hidden="true"></span> PSD2 Import
                             </NavLink>
                         </div>
                     </li>
@@ -51,19 +56,24 @@
                 else
                 {
                     <li class="nav-item">
-                        <NavLink class="dropdown-item" href="import">
-                            <span class="oi oi-data-transfer-upload" aria-hidden="true"></span> File Import
+                        <NavLink class="nav-link" href="import">
+                            <i class="bi bi-upload"></i> Import
                         </NavLink>
                     </li>
                 }
                 <li class="nav-item">
                     <NavLink class="nav-link" href="report">
-                        <span class="oi oi-bar-chart" aria-hidden="true"></span> Report
+                        <i class="bi bi-graph-up"></i> Report
                     </NavLink>
                 </li>
                 <li class="nav-item">
                     <NavLink class="nav-link" href="rules">
-                        <span class="oi oi-script" aria-hidden="true"></span> Rules
+                        <i class="bi bi-file-ruled"></i> Rules
+                    </NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="dataconsistency">
+                        <i class="bi bi-database-check"></i> Data Consistency
                     </NavLink>
                 </li>
             </ul>
@@ -78,7 +88,7 @@
         <div class="col-md-auto">
             <div class="navbar-text">
                 <span>
-                    Version: 1.6 (<a href="https://github.com/TheAxelander/OpenBudgeteer/blob/master/CHANGELOG.md" target="_blank">Change Log</a>)
+                    Version: 1.7.1 (<a href="https://github.com/TheAxelander/OpenBudgeteer/blob/master/CHANGELOG.md" target="_blank">Change Log</a>)
                 </span>
             </div>
         </div>

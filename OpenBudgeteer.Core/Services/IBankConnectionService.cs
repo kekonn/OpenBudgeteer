@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenBudgeteer.Core.Models;
+using OpenBudgeteer.Contracts.Models;
 
 namespace OpenBudgeteer.Core.Services;
 

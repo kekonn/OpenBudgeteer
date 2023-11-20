@@ -1,13 +1,12 @@
 ﻿@page "/transaction"
 
 @using OpenBudgeteer.Core.ViewModels
-@using OpenBudgeteer.Core.Common.Database
 @using Microsoft.EntityFrameworkCore
 @using System.Drawing
 @using OpenBudgeteer.Core.Common
-@using OpenBudgeteer.Core.Common.EventClasses
 @using OpenBudgeteer.Core.Common.Extensions
 @using OpenBudgeteer.Core.ViewModels.ItemViewModels
+@using OpenBudgeteer.Data
 @inject DbContextOptions<DatabaseContext> DbContextOptions
 @inject YearMonthSelectorViewModel YearMonthDataContext
 
@@ -35,18 +34,12 @@
         }
     </div>
     <div class="col-md-auto">
-        <select class="form-select form-select-sm" style="width: auto" @onchange="@Filter_SelectionChanged">
+        <select class="form-select form-select-sm" style="width: auto"
+                @bind:get="_dataContext.CurrentFilter.ToString()"
+                @bind:set="(value) => { _dataContext.CurrentFilter = Enum.TryParse(typeof(TransactionViewModelFilter), value, out var result) ? (TransactionViewModelFilter)result : TransactionViewModelFilter.NoFilter; }">
             @foreach (var filter in Enum.GetValues<TransactionViewModelFilter>())
             {
-                if (filter == _dataContext.CurrentFilter)
-                {
-                    <option selected value="@filter">@filter.GetStringValue()</option>    
-                }
-                else
-                {
-                    <option value="@filter">@filter.GetStringValue()</option>
-                }
-                
+                <option value="@filter">@filter.GetStringValue()</option>
             }
         </select>
     </div>
@@ -64,7 +57,7 @@
                 <th>Memo</th>
                 <th style="text-align: right; width: 90px">Amount</th>
                 <th style="width:300px">Buckets</th>
-                <th style="width:120px" />
+                <th style="width:1px" />
             </tr>
         </thead>
         <tbody>
@@ -73,18 +66,12 @@
                     <input class="form-control form-control-sm number-input" type="date" @bind="_dataContext.NewTransaction.Transaction.TransactionDate" />
                 </td>
                 <td>
-
-                    <select class="form-select form-select-sm" @onchange=@(e => _dataContext.NewTransaction.SelectedAccount = _dataContext.NewTransaction.AvailableAccounts.First(i => i.AccountId == Convert.ToInt32(e.Value)))>
+                    <select class="form-select form-select-sm"
+                            @bind:get="_dataContext.NewTransaction.SelectedAccount.AccountId.ToString()"
+                            @bind:set="(value) => { _dataContext.NewTransaction.SelectedAccount = _dataContext.NewTransaction.AvailableAccounts.First(i => i.AccountId == Guid.Parse(value)); }">
                         @foreach (var account in _dataContext.NewTransaction.AvailableAccounts)
                         {
-                            if (account.AccountId == _dataContext.NewTransaction.SelectedAccount.AccountId)
-                            {
-                                <option selected value="@account.AccountId">@account.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@account.AccountId">@account.Name</option>
-                            }
+                            <option value="@account.AccountId">@account.Name</option>
                         }
                     </select>
                 </td>
@@ -98,23 +85,12 @@
                             {
                                 <tr>
                                     <td>
-                                        <select class="form-select form-select-sm" style="background-color: @ColorTranslator.ToHtml(bucket.SelectedBucket.Color)"
-                                                @onchange=@((e) => bucket.SelectedBucket = bucket.AvailableBuckets.First(i => i.BucketId == Convert.ToInt32(e.Value)))>
-                                            @foreach (var availableBucket in bucket.AvailableBuckets)
-                                            {
-                                                if (bucket.SelectedBucket.BucketId == availableBucket.BucketId)
-                                                {
-                                                    <option selected style="background-color: @ColorTranslator.ToHtml(availableBucket.Color)" value="@availableBucket.BucketId">@availableBucket.Name</option>
-                                                }
-                                                else
-                                                {
-                                                    <option style="background-color: @ColorTranslator.ToHtml(availableBucket.Color)" value="@availableBucket.BucketId">@availableBucket.Name</option>
-                                                }
-                                            }
-                                        </select>
+                                        <button class="btn btn-sm btn-bucket" style="background-color: @ColorTranslator.ToHtml(bucket.SelectedBucket.Color)" @onclick="() => HandleUpdateSelectedBucketRequest(bucket)">
+                                            @bucket.SelectedBucket.Name
+                                        </button>
                                     </td>
                                     <td style="width: 90px"><input class="form-control form-control-sm number-input" type="number" @bind="bucket.Amount" /></td>
-                                    <td><button class="btn btn-sm btn-danger oi oi-x" @onclick="@(() => bucket.DeleteBucket())"></button></td>
+                                    <td style="width: 1px"><button class="btn btn-sm btn-danger bi bi-trash3" @onclick="@(() => bucket.DeleteBucket())"></button></td>
                                 </tr>
                             }
                         </tbody>
@@ -129,9 +105,9 @@
                     }
                 </td>
                 <td class="col-buttons">
-                    <button class="btn btn-sm btn-primary oi oi-fork" @onclick="@(() => SplitTransaction(_dataContext.NewTransaction))"></button>
-                    <button class="btn btn-sm btn-primary oi oi-check" @onclick="@(() => HandleResult(_dataContext.CreateItem()))"></button>
-                    <button class="btn btn-sm btn-danger oi oi-x" @onclick="@CancelNewTransaction"></button>
+                    <button class="btn btn-sm btn-primary" @onclick="@(() => SplitTransaction(_dataContext.NewTransaction))"><i class="bi bi-diagram-2"></i></button>
+                    <button class="btn btn-sm btn-primary bi bi-check-lg" @onclick="@(() => HandleResult(_dataContext.CreateItem()))"></button>
+                    <button class="btn btn-sm btn-danger bi bi-x-lg" @onclick="@CancelNewTransaction"></button>
                 </td>
             </tr>
         </tbody>
@@ -160,17 +136,12 @@
                     <input class="form-control form-control-sm number-input" type="date" @bind="transaction.Transaction.TransactionDate" />
                 </td>
                 <td>
-                    <select class="form-select form-select-sm" @onchange=@(e => transaction.SelectedAccount = transaction.AvailableAccounts.First(i => i.AccountId == Convert.ToInt32(e.Value)))>
+                    <select class="form-select form-select-sm"
+                            @bind:get="transaction.SelectedAccount.AccountId.ToString()"
+                            @bind:set="(value) => { transaction.SelectedAccount = transaction.AvailableAccounts.First(i => i.AccountId == Guid.Parse(value)); }">
                         @foreach (var account in transaction.AvailableAccounts)
                         {
-                            if (account.AccountId == transaction.SelectedAccount.AccountId)
-                            {
-                                <option selected value="@account.AccountId">@account.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@account.AccountId">@account.Name</option>
-                            }
+                            <option value="@account.AccountId">@account.Name</option>
                         }
                     </select>
                 </td>
@@ -184,23 +155,12 @@
                             {
                                 <tr>
                                     <td>
-                                        <select class="form-select form-select-sm" style="background-color: @ColorTranslator.ToHtml(bucket.SelectedBucket.Color)"
-                                                @onchange=@((e) => bucket.SelectedBucket = bucket.AvailableBuckets.First(i => i.BucketId == Convert.ToInt32(e.Value)))>
-                                            @foreach (var availableBucket in bucket.AvailableBuckets)
-                                            {
-                                                if (bucket.SelectedBucket.BucketId == availableBucket.BucketId)
-                                                {
-                                                    <option selected style="background-color: @ColorTranslator.ToHtml(availableBucket.Color)" value="@availableBucket.BucketId">@availableBucket.Name</option>
-                                                }
-                                                else
-                                                {
-                                                    <option style="background-color: @ColorTranslator.ToHtml(availableBucket.Color)" value="@availableBucket.BucketId">@availableBucket.Name</option>
-                                                }
-                                            }
-                                        </select>
+                                        <button class="btn btn-sm btn-bucket" style="background-color: @ColorTranslator.ToHtml(bucket.SelectedBucket.Color)" @onclick="() => HandleUpdateSelectedBucketRequest(bucket)">
+                                            @bucket.SelectedBucket.Name
+                                        </button>
                                     </td>
                                     <td style="width: 90px"><input class="form-control form-control-sm number-input" type="number" @bind="bucket.Amount" /></td>
-                                    <td><button class="btn btn-sm btn-danger oi oi-x" @onclick="@(() => bucket.DeleteBucket())"></button></td>
+                                    <td style="width: 1px"><button class="btn btn-sm btn-danger bi bi-trash3" @onclick="@(() => bucket.DeleteBucket())"></button></td>
                                 </tr>
                             }
                         </tbody>
@@ -215,15 +175,15 @@
                     }
                 </td>
                 <td class="col-buttons">
-                    <button class="btn btn-sm btn-primary oi oi-fork" @onclick="@(() => SplitTransaction(transaction))"></button>
-                    <button class="btn btn-sm btn-primary oi oi-check" @onclick="@(() => SaveTransaction(transaction))"></button>
-                    <button class="btn btn-sm btn-danger oi oi-x" @onclick="@(() => transaction.CancelModification())"></button>
+                    <button class="btn btn-sm btn-primary" @onclick="@(() => SplitTransaction(transaction))"><i class="bi bi-diagram-2"></i></button>
+                    <button class="btn btn-sm btn-primary bi bi-check-lg" @onclick="@(() => SaveTransaction(transaction))"></button>
+                    <button class="btn btn-sm btn-danger bi bi-x-lg" @onclick="@(() => transaction.CancelModification())"></button>
                 </td>
             </tr>
         }
         else
         {
-            <tr @onmouseover="() => transaction.IsHovered = true" @onmouseout="() => transaction.IsHovered = false">
+            <tr @onmouseover="@(() => transaction.IsHovered = true)" @onmouseout="@(() => transaction.IsHovered = false)">
                 <td class="col-numbers">@transaction.Transaction.TransactionDate.ToShortDateString()</td>
                 <td>@transaction.SelectedAccount.Name</td>
                 <td>@transaction.Transaction.Payee</td>
@@ -241,8 +201,8 @@
                 <td class="col-buttons">
                     @if (transaction.IsHovered)
                     {
-                        <button class="btn btn-sm btn-primary oi oi-pencil" @onclick="@(() => transaction.StartModification())"></button>
-                        <button class="btn btn-sm btn-danger oi oi-trash" @onclick="@(() => HandleTransactionDeletionRequest(transaction))"></button>
+                        <button class="btn btn-sm btn-primary bi bi-pencil" @onclick="@(() => transaction.StartModification())"></button>
+                        <button class="btn btn-sm btn-danger bi bi-trash3" @onclick="@(() => HandleTransactionDeletionRequest(transaction))"></button>
                     }
                 </td>
             </tr>
@@ -268,10 +228,16 @@
 }
 
 <RecurringTransactionDialog
-    DataContext="_recurringTransactionViewModel"
+    DataContext="@_recurringTransactionViewModel"
     IsDialogVisible="@_isRecurringTransactionModalDialogVisible"
-    OnClickCallback="@(() => _isRecurringTransactionModalDialogVisible = false)"
-    />
+    OnClickCallback="@(() => _isRecurringTransactionModalDialogVisible = false)"/>
+
+<BucketSelectDialog
+    DataContext="@_bucketSelectDialogDataContext"
+    IsDialogVisible="@_isBucketSelectDialogVisible"
+    IsDialogLoading="@_isBucketSelectDialogLoading"
+    OnBucketSelectedCallback="UpdateSelectedBucket"
+    OnCancelCallback="@(() => _isBucketSelectDialogVisible = false)"/>
 
 <DeleteConfirmationDialog 
     Title="Delete Transaction" 
@@ -290,6 +256,11 @@
     TransactionViewModel _dataContext;
     bool _newTransactionEnabled;
     bool _massEditEnabled;
+
+    BucketViewModel _bucketSelectDialogDataContext;
+    bool _isBucketSelectDialogVisible;
+    bool _isBucketSelectDialogLoading;
+    PartialBucketViewModelItem _partialBucketViewModelItemToBeUpdated;
 
     bool _isRecurringTransactionModalDialogVisible;
     RecurringTransactionViewModel _recurringTransactionViewModel;
@@ -311,7 +282,7 @@
         YearMonthDataContext.SelectedYearMonthChanged += async (sender, args) =>
         {
             await HandleResult(await _dataContext.LoadDataAsync());
-            base.StateHasChanged();
+            StateHasChanged();
         };
     }
 
@@ -349,7 +320,7 @@
     {
         _massEditEnabled = false;
         await HandleResult(await _dataContext.CancelAllTransactionAsync());
-        base.StateHasChanged();
+        StateHasChanged();
     }
 
     async void SaveTransaction(TransactionViewModelItem transaction)
@@ -391,6 +362,25 @@
         _recurringTransactionViewModel = new RecurringTransactionViewModel(DbContextOptions);
         await _recurringTransactionViewModel.LoadDataAsync();
         _isRecurringTransactionModalDialogVisible = true;
+    }
+    
+    async void HandleUpdateSelectedBucketRequest(PartialBucketViewModelItem partialBucketViewModelItem)
+    {
+        _isBucketSelectDialogVisible = true;
+        _isBucketSelectDialogLoading = true;
+        
+        _partialBucketViewModelItemToBeUpdated = partialBucketViewModelItem;
+        _bucketSelectDialogDataContext = new BucketViewModel(DbContextOptions, YearMonthDataContext);
+        await _bucketSelectDialogDataContext.LoadDataAsync(true, true);
+        
+        _isBucketSelectDialogLoading = false;
+        StateHasChanged();
+    }
+    
+    void UpdateSelectedBucket(Contracts.Models.Bucket selectedBucket)
+    {
+        _partialBucketViewModelItemToBeUpdated.SelectedBucket = selectedBucket;
+        _isBucketSelectDialogVisible = false;
     }
 
     async Task HandleResult(ViewModelOperationResult result)

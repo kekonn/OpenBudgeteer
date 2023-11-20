@@ -1,19 +1,15 @@
-using System;
-using System.Linq;
-using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using OpenBudgeteer.Core.Common;
 using NodaTime;
-using OpenBudgeteer.Core.Common.Database;
 using OpenBudgeteer.Core.Services;
 using OpenBudgeteer.Core.ViewModels;
+using OpenBudgeteer.Data;
 using Tewr.Blazor.FileReader;
 using VMelnalksnis.NordigenDotNet.DependencyInjection;
 
@@ -21,6 +17,9 @@ namespace OpenBudgeteer.Blazor;
 
 public class Startup
 {
+    private const string APPSETTINGS_CULTURE = "APPSETTINGS_CULTURE";
+    private const string APPSETTINGS_THEME = "APPSETTINGS_THEME";
+
     public Startup(IConfiguration configuration)
     {
         Configuration = configuration;
@@ -37,6 +36,7 @@ public class Startup
         services.AddServerSideBlazor();
         services.AddFileReaderService();
         services.AddScoped<YearMonthSelectorViewModel>();
+        services.AddDatabase(Configuration);
         
         // Add Nordigen services, if configured
         if (Configuration.GetSection("Nordigen").Exists())
@@ -48,65 +48,6 @@ public class Startup
             services.TryAddEnumerable(new ServiceDescriptor(typeof(IBankConnectionService),
                 typeof(NordigenService),
                 ServiceLifetime.Scoped));
-        }
-
-        var provider = Configuration.GetValue<string>("CONNECTION_PROVIDER");
-        string connectionString;
-        switch (provider)
-        {
-            case "mysql":
-                connectionString = $"Server={Configuration.GetValue<string>("CONNECTION_SERVER")};" +
-                               $"Port={Configuration.GetValue<string>("CONNECTION_PORT")};" +
-                               $"Database={Configuration.GetValue<string>("CONNECTION_DATABASE")};" +
-                               $"User={Configuration.GetValue<string>("CONNECTION_USER")};" +
-                               $"Password={Configuration.GetValue<string>("CONNECTION_PASSWORD")}";
-                
-                services.AddDbContext<DatabaseContext>(options => options.UseMySql(
-                        connectionString,
-                        ServerVersion.AutoDetect(connectionString),
-                        b => b.MigrationsAssembly("OpenBudgeteer.Core")),
-                    ServiceLifetime.Transient);
-
-                // Check availability of MySql Database
-                var iterations = 0;
-                while (iterations < 10)
-                {
-
-                    try
-                    {
-                        var tcpClient = new TcpClient(
-                                    Configuration.GetValue<string>("CONNECTION_SERVER"),
-                                    Configuration.GetValue<int>("CONNECTION_PORT"));
-                        tcpClient.Close();
-                        break;
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("Waiting for database.");
-                        Task.Delay(5000).Wait();
-                        iterations++;
-                    } 
-                }
-
-                // Check on Pending Db Migrations
-                var mySqlDbContext = new MySqlDatabaseContextFactory().CreateDbContext(connectionString);
-                if (mySqlDbContext.Database.GetPendingMigrations().Any()) mySqlDbContext.Database.Migrate();
-                
-                break;
-            case "sqlite":
-                connectionString = "Data Source=database/openbudgeteer.db";
-                services.AddDbContext<DatabaseContext>(options => options.UseSqlite(
-                        connectionString,
-                        b => b.MigrationsAssembly("OpenBudgeteer.Core")),
-                    ServiceLifetime.Transient);
-
-                // Check on Pending Db Migrations
-                var sqliteDbContext = new SqliteDatabaseContextFactory().CreateDbContext(connectionString);
-                if (sqliteDbContext.Database.GetPendingMigrations().Any()) sqliteDbContext.Database.Migrate();
-
-                break;
-            default:
-                throw new ArgumentOutOfRangeException($"Database provider {provider} not supported");
         }
         
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); // Required to read ANSI Text files
@@ -129,7 +70,8 @@ public class Startup
         app.UseHttpsRedirection();
         app.UseStaticFiles();
         
-        app.UseRequestLocalization(Configuration.GetValue<string>("APPSETTINGS_CULTURE"));
+        app.UseRequestLocalization(Configuration.GetValue<string>(APPSETTINGS_CULTURE));
+        AppSettings.Theme = Configuration.GetValue(APPSETTINGS_THEME, "Default");
 
         app.UseRouting();
 

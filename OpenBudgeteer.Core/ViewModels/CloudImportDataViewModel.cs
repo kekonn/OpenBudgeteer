@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OpenBudgeteer.Core.Common.Database;
-using OpenBudgeteer.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,8 +7,10 @@ using System.Threading.Tasks;
 using OpenBudgeteer.Core.Common;
 using TinyCsvParser.Mapping;
 using System.Threading;
+using OpenBudgeteer.Contracts.Models;
 using OpenBudgeteer.Core.Services;
 using OpenBudgeteer.Core.ViewModels.ItemViewModels;
+using OpenBudgeteer.Data;
 
 namespace OpenBudgeteer.Core.ViewModels;
 
@@ -211,5 +211,18 @@ public class CloudImportDataViewModel : ViewModelBase
             await transaction.RollbackAsync(cancellationToken);
             return new ViewModelOperationResult(false, $"Unable to Import Data. Error message: {e.Message}");
         }
+    }
+
+    /// <summary>
+    /// Looks up the <see cref="IBankConnectionService"/> for the given <see cref="BankServiceViewModelItem"/>.
+    /// </summary>
+    /// <param name="selectedBankService">The <see cref="BankServiceViewModelItem"/> to look up.</param>
+    /// <returns>The first known bank service that matches the selected bank service by id/typename, or null if none was found.</returns>
+    /// <exception cref="ArgumentNullException">When <paramref name="selectedBankService"/> is null.</exception>
+    public IBankConnectionService GetSelectedBankConnection(BankServiceViewModelItem selectedBankService)
+    {
+        if (selectedBankService == null) throw new ArgumentNullException(nameof(selectedBankService));
+
+        return _bankServices.FirstOrDefault(b => b.GetType().FullName.Equals(selectedBankService.Id));
     }
 }

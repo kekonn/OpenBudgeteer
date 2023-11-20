@@ -1,103 +1,113 @@
 ﻿@using OpenBudgeteer.Core.ViewModels.ItemViewModels
 @using System.Drawing
 @if (IsDialogVisible)
- {
-     <div class="modal fade show" style=" display: block;">
-         <div class="modal-dialog modal-dialog-scrollable" style="max-width: 600px">
-             <div class="modal-content">
-                 <div class="modal-header">
-                     <h4 class="modal-title">@Title</h4>
-                     <button type="button" class="btn-close" data-dismiss="modal" @onclick="OnCancelClickCallback"></button>
-                 </div>
-                 <div class="modal-body">
-                     <div class="mb-3">
-                         <label class="form-label">Name:</label>
-                         <input class="form-control form-control-sm" type="text" @bind="DataContext.Bucket.Name"/>
-                     </div>
-                     <div class="row mb-3">
-                         <div class="col">
-                             <label class="form-label">Bucket Type:</label>
-                             <select class="form-select form-select-sm" @onchange=@(e => DataContext.BucketVersion.BucketType = Convert.ToInt32(e.Value))>
-                                 @foreach (var bucketType in DataContext.AvailableBucketTypes)
-                                 {
-                                     var position = DataContext.AvailableBucketTypes.IndexOf(bucketType) + 1;
-                                     if (DataContext.BucketVersion.BucketType == position)
-                                     {
-                                         <option selected value="@position">@bucketType</option>
-                                     }
-                                     else
-                                     {
-                                         <option value="@position">@bucketType</option>
-                                     }
-                                 }
-                             </select>
-                         </div>
-						  <div class="col">
-                             <label class="form-label">Bucket Group:</label>
-                             <select class="form-select form-select-sm" @onchange=@(e => DataContext.Bucket.BucketGroupId = Convert.ToInt32(e.Value))>
-                                 @foreach (var bucketGroup in DataContext.AvailableBucketGroups)
-                                 {
-                                     if (bucketGroup.BucketGroupId == DataContext.Bucket.BucketGroupId)
-                                     {
-                                         <option selected value="@bucketGroup.BucketGroupId">@bucketGroup.Name</option>
-                                     }
-                                     else
-                                     {
-                                         <option value="@bucketGroup.BucketGroupId">@bucketGroup.Name</option>
-                                     }
-                                 }
-                             </select>
-                         </div>
-                     </div>
-                     <div class="row mb-3">
-                         <div class="col">
-                             <label class="form-label">Number of months:</label>
-                             <input class="form-control form-control-sm" style="text-align: right;" type="number" @bind="DataContext.BucketVersion.BucketTypeXParam"/>
-                         </div>
-                         <div class="col">
-                             <label class="form-label">Amount:</label>
-                             <input class="form-control form-control-sm" style="text-align: right;" type="number" @bind="DataContext.BucketVersion.BucketTypeYParam"/>
-                         </div>
-                     </div>
-                     <div class="row mb-3">
-                         <div class="col">
-                             <label class="form-label">(First) Target Date:</label>
-                             <input class="form-control form-control-sm" style="text-align: right;" type="date" @bind="DataContext.BucketVersion.BucketTypeZParam" @bind:format="yyyy-MM-dd"/>
-                         </div>
-                         <div class="col">
-                             <label class="form-label">Color:</label>
-                             <select class="form-select form-select-sm" style="background-color: @ColorTranslator.ToHtml(DataContext.Bucket.Color)"
-                                     @onchange=@(e => DataContext.Bucket.ColorCode = Convert.ToString(e.Value) ?? Color.LightGray.Name)>
-                                 @foreach (var color in DataContext.AvailableColors)
-                                 {
-                                     if (color == DataContext.Bucket.Color)
-                                     {
-                                         <option selected style="background-color: @ColorTranslator.ToHtml(color)" value="@color.Name">@color.Name</option>
-                                     }
-                                     else
-                                     {
-                                         <option style="background-color: @ColorTranslator.ToHtml(color)" value="@color.Name">@color.Name</option>
-                                     }
-                                 }
-                             </select>
-                         </div>
-                     </div>
-                     <div>
-                         <label class="form-label">Notes:</label>
-                         <textarea rows="5" style="width: 100%" @bind="DataContext.BucketVersion.Notes"></textarea>
-                     </div>
-                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="OnSaveClickCallback">Save</button>
-                    <button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="OnCancelClickCallback">Cancel</button>
+{
+    <div class="modal fade show" style=" display: block;">
+        <div class="modal-dialog modal-dialog-scrollable" style="max-width: 600px">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">@Title</h4>
+                    <button type="button" class="btn-close" data-dismiss="modal" @onclick="OnCancelClickCallback"></button>
                 </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name:</label>
+                        <input class="form-control form-control-sm" type="text" @bind="DataContext.Bucket.Name"/>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label">Bucket Type:</label>
+                            <select class="form-select form-select-sm"
+                                    @bind:get="DataContext.BucketVersion.BucketType.ToString()"
+                                    @bind:set="(value) => { 
+                                        DataContext.BucketVersion.BucketType = Convert.ToInt32(value); 
+                                        BucketType_SelectionChanged();}">
+                                @foreach (var bucketType in DataContext.AvailableBucketTypes)
+                                {
+                                    <option value="@(DataContext.AvailableBucketTypes.IndexOf(bucketType) + 1)">@bucketType</option>
+                                }
+                            </select>
+                        </div>
+						<div class="col">
+                            <label class="form-label">Bucket Group:</label>
+                            <select class="form-select form-select-sm" 
+                                    @bind:get="DataContext.Bucket.BucketGroupId.ToString()"
+                                    @bind:set="(value) => { DataContext.Bucket.BucketGroupId = Guid.Parse(value); }">
+                                @foreach (var bucketGroup in DataContext.AvailableBucketGroups)
+                                {
+                                    <option value="@bucketGroup.BucketGroupId">@bucketGroup.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label">Number of months:</label>
+                            @if (_isNumberOfMonthsEnabled)
+                            {
+                                <input class="form-control form-control-sm" style="text-align: right;" type="number" @bind="DataContext.BucketVersion.BucketTypeXParam"/>    
+                            }
+                            else
+                            {
+                                <input class="form-control form-control-sm" disabled style="text-align: right;" type="number"/>
+                            }
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Amount:</label>
+                            @if (_isAmountEnabled)
+                            {
+                                <input class="form-control form-control-sm" style="text-align: right;" type="number" @bind="DataContext.BucketVersion.BucketTypeYParam"/>    
+                            }
+                            else
+                            {
+                                <input class="form-control form-control-sm" disabled style="text-align: right;" type="number"/>
+                            }
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label">(First) Target Date:</label>
+                            @if (_isTargetDataEnabled)
+                            {
+                                <input class="form-control form-control-sm" style="text-align: right;" type="date" @bind="DataContext.BucketVersion.BucketTypeZParam" @bind:format="yyyy-MM-dd"/>    
+                            }
+                            else
+                            {
+                                <input class="form-control form-control-sm" disabled style="text-align: right;" type="date"/>
+                            }
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Color:</label>
+                            <select class="form-select form-select-sm" style="background-color: @ColorTranslator.ToHtml(DataContext.Bucket.Color)"
+                                    @bind:get="DataContext.Bucket.ColorCode"
+                                    @bind:set="(value) => { DataContext.Bucket.ColorCode = Convert.ToString(value) ?? Color.LightGray.Name; }">
+                                @foreach (var color in DataContext.AvailableColors)
+                                {
+                                    <option style="background-color: @ColorTranslator.ToHtml(color)" value="@color.Name">@color.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Notes:</label>
+                        <textarea rows="5" style="width: 100%" @bind="DataContext.BucketVersion.Notes"></textarea>
+                    </div>
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="OnSaveClickCallback">Save</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="OnCancelClickCallback">Cancel</button>
             </div>
         </div>
     </div>
-    <div class="modal-backdrop fade show"></div>
- }
+</div>
+<div class="modal-backdrop fade show"></div>
+}
 
 @code {
+    bool _isNumberOfMonthsEnabled = true;
+    bool _isAmountEnabled = true;
+    bool _isTargetDataEnabled = true;
+    
     [Parameter]
     public string Title { get; set; }
 
@@ -112,4 +122,42 @@
 
     [Parameter]
     public EventCallback<MouseEventArgs> OnSaveClickCallback { get; set; }
+
+    protected override Task OnParametersSetAsync()
+    {
+        if (IsDialogVisible && DataContext != null) BucketType_SelectionChanged();
+        return base.OnParametersSetAsync();
+    }
+
+    void BucketType_SelectionChanged()
+    {
+        switch (DataContext.BucketVersion.BucketType)
+        {
+            case 1:
+                _isNumberOfMonthsEnabled = false;
+                _isAmountEnabled = false;
+                _isTargetDataEnabled = false;
+                break;
+            case 2:
+                _isNumberOfMonthsEnabled = false;
+                _isAmountEnabled = true;
+                _isTargetDataEnabled = false;
+                break;
+            case 3:
+                _isNumberOfMonthsEnabled = true;
+                _isAmountEnabled = true;
+                _isTargetDataEnabled = true;
+                break;
+            case 4:
+                _isNumberOfMonthsEnabled = false;
+                _isAmountEnabled = true;
+                _isTargetDataEnabled = true;
+                break;
+            default:
+                _isNumberOfMonthsEnabled = true;
+                _isAmountEnabled = true;
+                _isTargetDataEnabled = true;
+                break;
+        }
+    }
 }

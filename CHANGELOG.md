@@ -1,11 +1,72 @@
-### 1.6 (20xx-xx-xx)
+### 1.7.1 (2023-10-16)
+
+* [Fixed] Potentially fixed crashes on Rules page due to an unnecessary parallel initialization [#165](https://github.com/TheAxelander/OpenBudgeteer/issues/165)
+
+### 1.7 (2023-10-03)
+
+* [Add] PostgreSQL support [#81](https://github.com/TheAxelander/OpenBudgeteer/issues/81) Thanks [csillaggyujto](https://github.com/csillaggyujto)
+* [Add] Confirmation Dialog before setting a Bucket inactive [#119](https://github.com/TheAxelander/OpenBudgeteer/issues/119)
+* [Add] Some validations for creating and changing Rules
+* [Breaking Change] Specific characters are no longer allowed for database names (SQL injection prevention)
+* [Breaking Change] For database type `sqlite` the parameter `CONNECTION_DATABASE` can now include a full path (no longer defaulted in `/app/database`). Consider updating your volume mapping.
+* [Changed] Migrated to .Net 7
+* [Changed] Integer based IDs in database have been migrated to Guid
+* [Changed] Overall refactoring of database backend including SQL injection protection. Thanks [csillaggyujto](https://github.com/csillaggyujto)
+* [Changed] Blazor Docker Image based on Alpine [#143](https://github.com/TheAxelander/OpenBudgeteer/issues/143) Thanks [csillaggyujto](https://github.com/csillaggyujto)
+* [Changed] Prevent any kind of interaction with Buckets marked as inactive [#111](https://github.com/TheAxelander/OpenBudgeteer/issues/111)
+* [Changed] Bucket selection on Transaction and Rules Page now happens in a separate dialog which shows a similar overview like on Bucket page [#112](https://github.com/TheAxelander/OpenBudgeteer/issues/112)
+* [Changed] Replaced custom solution to fix [#114](https://github.com/TheAxelander/OpenBudgeteer/issues/114) with new `bind:get` and `bind:set` feature from .Net 7
+* [Changed] Improved performance for duplicate check on Import Page
+* [Changed] Improved visibility of some reports on Report Page [#137](https://github.com/TheAxelander/OpenBudgeteer/issues/137)
+* [Changed] Improved Bucket Type handling for Create/Edit Bucket [#184](https://github.com/TheAxelander/OpenBudgeteer/issues/184) [#160](https://github.com/TheAxelander/OpenBudgeteer/issues/160)
+* [Fixed] Enable de-selection of Payee on Import Page [#148](https://github.com/TheAxelander/OpenBudgeteer/issues/148)
+* [Fixed] Duplicate matching on Import Page [#151](https://github.com/TheAxelander/OpenBudgeteer/issues/151) Thanks [Lucaber](https://github.com/Lucaber)
+* [Fixed] Negative progress for Buckets with type "Expenses every X months" [#158](https://github.com/TheAxelander/OpenBudgeteer/issues/158)
+* [Fixed] Sqlite Database locked while using "Distribute Budget" [#171](https://github.com/TheAxelander/OpenBudgeteer/issues/171)
+* [Fixed] Missing Unicode support for Import [#163](https://github.com/TheAxelander/OpenBudgeteer/issues/163)
+* [Fixed] Error message closes Modal Dialog for Create/Edit Bucket [#170](https://github.com/TheAxelander/OpenBudgeteer/issues/170)
+* [Fixed] Wrong selection after saving an Import Profile [#172](https://github.com/TheAxelander/OpenBudgeteer/issues/172)
+* [Fixed] Allow selection of default system buckets in rules [#191](https://github.com/TheAxelander/OpenBudgeteer/pull/191) Thanks [Lucaber](https://github.com/Lucaber)
+* [Fixed] Fix navbar in portrait mode [#190](https://github.com/TheAxelander/OpenBudgeteer/pull/190) Thanks [Lucaber](https://github.com/Lucaber)
+* [Known issue] Update 1.7 doesn't compile currently for ARM64
+
+### 1.6.3 (2023-01-27)
+
+* [Add] Several Confirmation Dialogs for Import Profile handling [#124](https://github.com/TheAxelander/OpenBudgeteer/issues/124)
+* [Fixed] Proper reset of values after deleting an Import Profile [#125](https://github.com/TheAxelander/OpenBudgeteer/issues/125)
+* [Fixed] Overall improved and fixed error handling on Import Page
+
+### 1.6.2 (2023-01-11)
+
+* [Fixed] Due to implemented fix for [#114](https://github.com/TheAxelander/OpenBudgeteer/issues/114) Column mapping on Import Page was not working properly [#121](https://github.com/TheAxelander/OpenBudgeteer/issues/121) [#122](https://github.com/TheAxelander/OpenBudgeteer/issues/122)
+ 
+### 1.6.1 (2022-12-31)
+
+* [Changed] Slight visual changes for Mapping Rule modification
+* [Fixed] Rendering of Drop-down selection element for Firefox browser [#114](https://github.com/TheAxelander/OpenBudgeteer/issues/114)
+
+### 1.6 (2022-12-03)
 
 * [Add] Enhanced Bucket assignment for Bank Transaction (display remaining amount, manual triggered split) Thanks [ambroser1971](https://github.com/ambroser1971)
 * [Add] Recurring Transactions [#74](https://github.com/TheAxelander/OpenBudgeteer/issues/74)
+* [Add] Page with reports checking consistency of database data [#3](https://github.com/TheAxelander/OpenBudgeteer/issues/3)
+* [Add] Usage of themes from [Bootswatch](https://bootswatch.com) [#101](https://github.com/TheAxelander/OpenBudgeteer/issues/101)
+* [Add] Enable MySql User and Database creation via MySql root User [#75](https://github.com/TheAxelander/OpenBudgeteer/issues/75)
+* [Add] Bucket Details with Statistics [#20](https://github.com/TheAxelander/OpenBudgeteer/issues/20)
+* [Add] Extended mapping settings for Import Profiles [#76](https://github.com/TheAxelander/OpenBudgeteer/issues/76)
+* [Add] Button to directly import data without duplicates [#109](https://github.com/TheAxelander/OpenBudgeteer/issues/109)
+* [Add] News feed [#85](https://github.com/TheAxelander/OpenBudgeteer/issues/85)
 * [Breaking Change] Docker Environment Variable Format [#71](https://github.com/TheAxelander/OpenBudgeteer/issues/71)
 * [Changed] Bucket Page: Want, In and Activity figures also now on Bucket Group level [#99](https://github.com/TheAxelander/OpenBudgeteer/issues/99)
 * [Changed] Updated Bootstrap to v5.1.3
+* [Changed] Replaced Open Iconic icons with Bootstrap Icons
+* [Changed] Made Icons8 images offline available 
+* [Changed] Redesign of Import Page
+* [Changed] On Import Page automatic data validation after selecting an Import Profile has been disabled for now to prevent hickups on large files
 * [Fixed] App Startup will now wait for availability of MySql database [#50](https://github.com/TheAxelander/OpenBudgeteer/issues/50)
+* [Fixed] Rules disappear after Cancel All [#102](https://github.com/TheAxelander/OpenBudgeteer/issues/102)
+* [Fixed] Correct number of months shown on Report Page (e.g. should show past 24 months but displays 25 months)
+* [Fixed] Buckets that have been marked as inactive no longer display Want [#108](https://github.com/TheAxelander/OpenBudgeteer/issues/108)
 
 ### 1.5.2 (2022-03-26)
 
